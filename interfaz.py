@@ -6,6 +6,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers, models
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tkinter import ttk
 
 # Definir rutas de los datos
 train_dir = "train/"
@@ -56,13 +57,24 @@ def entrenar_modelo():
     # Compilar el modelo
     model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
 
+    # Configurar la barra de progreso
+    barra_progreso = ttk.Progressbar(root, length=400, mode="determinate")
+    barra_progreso.pack(pady=10)
+
+    # Función para actualizar la barra de progreso
+    def actualizar_barra_progreso(epoch, logs):
+        porcentaje_progreso = (epoch + 1) / 15 * 100
+        barra_progreso["value"] = porcentaje_progreso
+        root.update_idletasks()
+
     # Entrenar el modelo
     history = model.fit(
         train_generator,
         steps_per_epoch=train_generator.n // batch_size,
         epochs=15,
         validation_data=validation_generator,
-        validation_steps=validation_generator.n // batch_size
+        validation_steps=validation_generator.n // batch_size,
+        callbacks=[tf.keras.callbacks.LambdaCallback(on_epoch_end=actualizar_barra_progreso)]
     )
 
     # Guardar el modelo entrenado
@@ -105,6 +117,9 @@ def detectar_expresion(ruta_imagen):
     emocion_predicha = correspondencia_emociones[clase_predicha]
     print(f"La expresión facial predicha es: {emocion_predicha}")
 
+    # Actualizar la etiqueta con la emoción predicha
+    etiqueta_emocion.config(text=f"Emoción predicha: {emocion_predicha}")
+
 # Funciones para la interfaz gráfica
 def ejecutar_entrenador():
     entrenar_modelo()
@@ -127,9 +142,20 @@ def seleccionar_imagen():
 root = tk.Tk()
 root.title("Detector de Expresión Facial")
 
+# Configurar el tamaño y posición de la ventana
+ancho_ventana = 800
+alto_ventana = 600
+posicion_x = (root.winfo_screenwidth() // 2) - (ancho_ventana // 2)
+posicion_y = (root.winfo_screenheight() // 2) - (alto_ventana // 2)
+root.geometry(f"{ancho_ventana}x{alto_ventana}+{posicion_x}+{posicion_y}")
+
 # Botón para ejecutar el entrenador
 btn_entrenar = tk.Button(root, text="Entrenar Modelo", command=ejecutar_entrenador)
 btn_entrenar.pack(pady=10)
+
+# Configurar barra de progreso
+barra_progreso = ttk.Progressbar(root, length=400, mode="determinate")
+barra_progreso.pack(pady=10)
 
 # Botón para seleccionar imagen
 btn_seleccionar = tk.Button(root, text="Seleccionar Imagen", command=seleccionar_imagen)
@@ -138,6 +164,10 @@ btn_seleccionar.pack(pady=10)
 # Vista previa de la imagen
 vista_previa = tk.Label(root)
 vista_previa.pack(pady=10)
+
+# Etiqueta para la emoción predicha
+etiqueta_emocion = tk.Label(root, text="Emoción predicha: ")
+etiqueta_emocion.pack(pady=10)
 
 # Ejecutar la interfaz
 root.mainloop()
