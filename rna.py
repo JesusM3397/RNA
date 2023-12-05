@@ -1,58 +1,66 @@
 import tensorflow as tf
 from tensorflow.keras import layers, models
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import scipy
+
 
 # Definir rutas de los datos
-train_dir = 'train/'
-validation_dir = 'validation/'
+train_dir = "train/"
+validation_dir = "validation/"
 
 # Configurar generadores de imágenes
-train_datagen = ImageDataGenerator(rescale=1./255)
-test_datagen = ImageDataGenerator(rescale=1./255)
+train_datagen = ImageDataGenerator(rescale=1.0 / 255)
+test_datagen = ImageDataGenerator(rescale=1.0 / 255)
 
+# Configurar generadores de datos
+batch_size = (
+    1  # Ajusta el tamaño del lote según el número total de muestras de entrenamiento
+)
 train_generator = train_datagen.flow_from_directory(
     train_dir,
     target_size=(48, 48),
-    batch_size=64,
-    color_mode='grayscale',
-    class_mode='categorical'
+    batch_size=batch_size,
+    color_mode="grayscale",
+    class_mode="categorical",
 )
 
 validation_generator = test_datagen.flow_from_directory(
     validation_dir,
     target_size=(48, 48),
-    batch_size=64,
-    color_mode='grayscale',
-    class_mode='categorical'
+    batch_size=batch_size,
+    color_mode="grayscale",
+    class_mode="categorical",
 )
 
+print("Número de muestras de entrenamiento:", train_generator.n)
+print("Número de pasos por época:", train_generator.n // train_generator.batch_size)
 # Crear la arquitectura del modelo
-model = models.Sequential([
-    layers.Conv2D(32, (3, 3), activation='relu', input_shape=(48, 48, 1)),
-    layers.MaxPooling2D((2, 2)),
-    layers.Conv2D(64, (3, 3), activation='relu'),
-    layers.MaxPooling2D((2, 2)),
-    layers.Conv2D(128, (3, 3), activation='relu'),
-    layers.MaxPooling2D((2, 2)),
-    layers.Flatten(),
-    layers.Dense(128, activation='relu'),
-    layers.Dense(7, activation='softmax')  # Capa de salida para 7 emociones
-])
+model = models.Sequential(
+    [
+        layers.Conv2D(32, (3, 3), activation="relu", input_shape=(48, 48, 1)),
+        layers.MaxPooling2D((2, 2)),
+        layers.Conv2D(64, (3, 3), activation="relu"),
+        layers.MaxPooling2D((2, 2)),
+        layers.Conv2D(128, (3, 3), activation="relu"),
+        layers.MaxPooling2D((2, 2)),
+        layers.Flatten(),
+        layers.Dense(128, activation="relu"),
+        layers.Dense(7, activation="softmax"),  # Capa de salida para 7 emociones
+    ]
+)
 
 # Compilar el modelo
-model.compile(optimizer='adam',
-              loss='categorical_crossentropy',
-              metrics=['accuracy'])
+model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
 
 # Entrenar el modelo
 history = model.fit(
     train_generator,
-    steps_per_epoch=train_generator.n // train_generator.batch_size,
+    steps_per_epoch=train_generator.n // batch_size,
     epochs=15,
     validation_data=validation_generator,
-    validation_steps=validation_generator.n // validation_generator.batch_size
+    validation_steps=validation_generator.n // batch_size
 )
 
 # Guardar el modelo entrenado
-model.save('modelo_entrenado.h5')
+model.save("modelo_entrenado.h5")
 print("Modelo guardado correctamente.")
