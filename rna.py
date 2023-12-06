@@ -2,19 +2,15 @@ import tensorflow as tf
 from tensorflow.keras import layers, models
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import scipy
-
-
-# Definir rutas de los datos
 train_dir = "train/"
 validation_dir = "validation/"
 
-# Configurar generadores de imágenes
 train_datagen = ImageDataGenerator(rescale=1.0 / 255)
 test_datagen = ImageDataGenerator(rescale=1.0 / 255)
 
-# Configurar generadores de datos
+
 batch_size = (
-    1  # Ajusta el tamaño del lote según el número total de muestras de entrenamiento
+    1  
 )
 train_generator = train_datagen.flow_from_directory(
     train_dir,
@@ -34,7 +30,6 @@ validation_generator = test_datagen.flow_from_directory(
 
 print("Número de muestras de entrenamiento:", train_generator.n)
 print("Número de pasos por época:", train_generator.n // train_generator.batch_size)
-# Crear la arquitectura del modelo
 model = models.Sequential(
     [
         layers.Conv2D(32, (3, 3), activation="relu", input_shape=(48, 48, 1)),
@@ -49,10 +44,8 @@ model = models.Sequential(
     ]
 )
 
-# Compilar el modelo
 model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
 
-# Entrenar el modelo
 history = model.fit(
     train_generator,
     steps_per_epoch=train_generator.n // batch_size,
@@ -61,6 +54,5 @@ history = model.fit(
     validation_steps=validation_generator.n // batch_size
 )
 
-# Guardar el modelo entrenado
 model.save("modelo_entrenado.h5")
 print("Modelo guardado correctamente.")

@@ -8,17 +8,16 @@ from tensorflow.keras import layers, models
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tkinter import ttk
 
-# Definir rutas de los datos
 train_dir = "train/"
 validation_dir = "validation/"
 
-# Funciones del entrenador
+
 def entrenar_modelo():
-    # Configurar generadores de imágenes
+    
     train_datagen = ImageDataGenerator(rescale=1.0 / 255)
     test_datagen = ImageDataGenerator(rescale=1.0 / 255)
 
-    # Configurar generadores de datos
+   
     batch_size = 1
     train_generator = train_datagen.flow_from_directory(
         train_dir,
@@ -39,7 +38,7 @@ def entrenar_modelo():
     print("Número de muestras de entrenamiento:", train_generator.n)
     print("Número de pasos por época:", train_generator.n // train_generator.batch_size)
 
-    # Crear la arquitectura del modelo
+    
     model = models.Sequential(
         [
             layers.Conv2D(32, (3, 3), activation="relu", input_shape=(48, 48, 1)),
@@ -54,20 +53,20 @@ def entrenar_modelo():
         ]
     )
 
-    # Compilar el modelo
+    
     model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
 
-    # Configurar la barra de progreso
+    
     barra_progreso = ttk.Progressbar(root, length=400, mode="determinate")
     barra_progreso.pack(pady=10)
 
-    # Función para actualizar la barra de progreso
+    
     def actualizar_barra_progreso(epoch, logs):
         porcentaje_progreso = (epoch + 1) / 15 * 100
         barra_progreso["value"] = porcentaje_progreso
         root.update_idletasks()
 
-    # Entrenar el modelo
+    
     history = model.fit(
         train_generator,
         steps_per_epoch=train_generator.n // batch_size,
@@ -77,11 +76,11 @@ def entrenar_modelo():
         callbacks=[tf.keras.callbacks.LambdaCallback(on_epoch_end=actualizar_barra_progreso)]
     )
 
-    # Guardar el modelo entrenado
+    
     model.save("modelo_entrenado.h5")
     print("Modelo guardado correctamente.")
 
-# Funciones del clasificador
+
 def cargar_y_preprocesar_imagen(ruta_imagen):
     img = cv2.imread(ruta_imagen, cv2.IMREAD_GRAYSCALE)
     img = cv2.resize(img, (48, 48))
@@ -90,19 +89,19 @@ def cargar_y_preprocesar_imagen(ruta_imagen):
     return img
 
 def detectar_expresion(ruta_imagen):
-    # Cargar el modelo entrenado
+    
     model = tf.keras.models.load_model('modelo_entrenado.h5')
 
-    # Cargar y preprocesar la nueva imagen
+   
     imagen_nueva = cargar_y_preprocesar_imagen(ruta_imagen)
 
-    # Hacer la predicción
+    
     prediccion = model.predict(imagen_nueva)
 
-    # Decodificar la salida para obtener la clase predicha
+    
     clase_predicha = np.argmax(prediccion)
 
-    # Definir la correspondencia de clases con emociones
+    
     correspondencia_emociones = {
         0: "Enojo",
         1: "Asco",
@@ -113,14 +112,14 @@ def detectar_expresion(ruta_imagen):
         6: "Neutral"
     }
 
-    # Imprimir la clase predicha
+    
     emocion_predicha = correspondencia_emociones[clase_predicha]
     print(f"La expresión facial predicha es: {emocion_predicha}")
 
-    # Actualizar la etiqueta con la emoción predicha
+   
     etiqueta_emocion.config(text=f"Emoción predicha: {emocion_predicha}")
 
-# Funciones para la interfaz gráfica
+
 def ejecutar_entrenador():
     entrenar_modelo()
     print("Modelo entrenado correctamente.")
@@ -128,46 +127,46 @@ def ejecutar_entrenador():
 def seleccionar_imagen():
     ruta_imagen = filedialog.askopenfilename(title="Seleccionar imagen", filetypes=[("Archivos de imagen", "*.png;*.jpg;*.jpeg")])
     if ruta_imagen:
-        # Mostrar vista previa de la imagen
+        
         img = Image.open(ruta_imagen)
-        img = img.resize((200, 200), Image.LANCZOS)  # Cambiado a LANCZOS
+        img = img.resize((200, 200), Image.LANCZOS)  
         img = ImageTk.PhotoImage(img)
         vista_previa.config(image=img)
         vista_previa.image = img
 
-        # Detectar expresión facial
+        
         detectar_expresion(ruta_imagen)
 
-# Crear la interfaz gráfica
+
 root = tk.Tk()
 root.title("Detector de Expresión Facial")
 
-# Configurar el tamaño y posición de la ventana
+
 ancho_ventana = 800
 alto_ventana = 600
 posicion_x = (root.winfo_screenwidth() // 2) - (ancho_ventana // 2)
 posicion_y = (root.winfo_screenheight() // 2) - (alto_ventana // 2)
 root.geometry(f"{ancho_ventana}x{alto_ventana}+{posicion_x}+{posicion_y}")
 
-# Botón para ejecutar el entrenador
+
 btn_entrenar = tk.Button(root, text="Entrenar Modelo", command=ejecutar_entrenador)
 btn_entrenar.pack(pady=10)
 
-# Configurar barra de progreso
+
 barra_progreso = ttk.Progressbar(root, length=400, mode="determinate")
 barra_progreso.pack(pady=10)
 
-# Botón para seleccionar imagen
+
 btn_seleccionar = tk.Button(root, text="Seleccionar Imagen", command=seleccionar_imagen)
 btn_seleccionar.pack(pady=10)
 
-# Vista previa de la imagen
+
 vista_previa = tk.Label(root)
 vista_previa.pack(pady=10)
 
-# Etiqueta para la emoción predicha
+
 etiqueta_emocion = tk.Label(root, text="Emoción predicha: ")
 etiqueta_emocion.pack(pady=10)
 
-# Ejecutar la interfaz
+
 root.mainloop()
